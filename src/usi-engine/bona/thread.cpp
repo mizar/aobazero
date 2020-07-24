@@ -530,7 +530,7 @@ tlp_is_descendant( const tree_t * restrict ptree, int slot_ancestor )
 }
 
 
-#  if defined(_MSC_VER)
+#  if defined(_MSC_VER) || defined(USE_WINAPI)
 static unsigned int __stdcall start_address( void *arg )
 #  else
 static void *start_address( void *arg )

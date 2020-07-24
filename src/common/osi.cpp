@@ -50,6 +50,12 @@ void OSI::binary2text(char *msg, uint &len, char &ch_last) noexcept {
     ch_last = ch; }
   len = len1; }
 
+uint OSI::get_pid() noexcept {
+    auto pid = getpid();
+    if (pid < 0) die(ERR_INT("INTERNAL ERROR"));
+    return static_cast<unsigned int>(pid);
+}
+
 class LastErr {
   enum class Type { API, Sckt };
   char *_msg;
