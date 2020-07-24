@@ -24,15 +24,17 @@ clang:
 		LDFLAGS='$(LDFLAGS) -flto -fuse-linker-plugin' \
 		$(PROGRAM)
 
-DYNAMIC_LIBS = -lboost_system -lboost_filesystem -lboost_program_options -lpthread -lz -llzma -lrt
+DYNAMIC_LIBS = -lpthread -lz -llzma
 LIBS =
 
 ifeq ($(THE_OS),Linux)
 # for Linux with OpenBLAS
 	CXXFLAGS += -I/usr/include/openblas
 #	CXXFLAGS += -I/usr/include/openblas -I./Eigen
+	DYNAMIC_LIBS += -lboost_system -lboost_filesystem -lboost_program_options
 	DYNAMIC_LIBS += -lopenblas
 	DYNAMIC_LIBS += -lOpenCL
+	DYNAMIC_LIBS += -lrt
 endif
 ifeq ($(THE_OS),Darwin)
 # for macOS (comment out the Linux part)
@@ -40,6 +42,24 @@ ifeq ($(THE_OS),Darwin)
 	LIBS += -framework OpenCL
 #	CXXFLAGS += -I./Eigen
 	CXXFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Headers
+	DYNAMIC_LIBS += -lboost_system -lboost_filesystem -lboost_program_options
+	DYNAMIC_LIBS += -lrt
+endif
+ifeq ($(MSYSTEM),MINGW64)
+# for Windows (MSYS2 MINGW64 environment)
+#  pacman -S --noconfirm mingw-w64-x86_64-boost
+#  pacman -S --noconfirm mingw-w64-x86_64-openblas
+#  pacman -S --noconfirm mingw-w64-x86_64-opencl-headers
+#  pacman -S --noconfirm mingw-w64-x86_64-opencl-icd-git
+	CXXFLAGS += -I$(shell cygpath -aw /mingw64/include/boost)
+	CXXFLAGS += -I$(shell cygpath -aw /mingw64/include/CL)
+	CXXFLAGS += -I$(shell cygpath -aw /mingw64/include/OpenBLAS)
+	CXXFLAGS += -DUSE_WINAPI -DWIN32 -DBOOST_USE_WINDOWS_H -DWIN32_LEAN_AND_MEAN
+	DYNAMIC_LIBS += -lboost_system-mt -lboost_filesystem-mt -lboost_program_options-mt
+	DYNAMIC_LIBS += -lws2_32 -lwsock32
+	DYNAMIC_LIBS += -lopenblas
+#	DYNAMIC_LIBS += -lOpenCL
+	LDFLAGS += -static -Wl,--stack,25000000
 endif
 
 # for MKL instead of OpenBLAS
@@ -48,7 +68,7 @@ endif
 #LDFLAGS  += -L/opt/intel/mkl/lib/intel64/
 
 # CPU_ONLY = 1 for cpu version.
-CPU_ONLY = 0
+CPU_ONLY = 1
 
 ifeq ($(CPU_ONLY), 1)
 CXXFLAGS += -DUSE_CPU_ONLY
